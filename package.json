@@ -1,6 +1,6 @@
 {
 	"name": "arc-web3-signable-accounts",
-	"version": "0.6.0",
+	"version": "0.7.0",
 	"description": "An addon for arc-web3 which actually lets you sign transactions.",
 	"keywords": [],
 	"homepage": "https://github.com/ARitz-Cracker/arc-web3-signable-accounts#readme",
@@ -15,7 +15,7 @@
 		"url": "https://github.com/ARitz-Cracker/arc-web3-signable-accounts.git"
 	},
 	"dependencies": {
-		"arc-web3": "^0.7.0",
+		"arc-web3": "^0.7.2",
 		"bitcoin-ts": "^1.3.0",
 		"arc-bufferlib": "^0.9.0"
 	}
