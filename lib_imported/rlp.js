@@ -5,10 +5,8 @@
  * This file is Used, modified, and redistributed under the terms defined in the "Mozilla Public License 2.0" Lisence. Visit https://github.com/ethereumjs/rlp/blob/5849c7b8d19458cb2e591ce6ee303e45e4756f5d/LICENSE to obtain a copy of this lisence.
  *
  * Changes made:
- * 
+ * Remove BNjs in favoir of BigInt, remove assert, remove safe-buffer
  */
-const BigNumber = require("bignumber.js");
-const BufferLib = require("arc-bufferlib");
  
 /**
  * RLP Encoding based on: https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-RLP
@@ -23,14 +21,14 @@ exports.encode = function (input) {
 		for (var i = 0; i < input.length; i++) {
 			output.push(exports.encode(input[i]))
 		}
-		var buf = BufferLib.concat(output)
-		return BufferLib.concat([encodeLength(buf.length, 192), buf])
+		var buf = Buffer.concat(output)
+		return Buffer.concat([encodeLength(buf.length, 192), buf])
 	} else {
 		input = toBuffer(input)
 		if (input.length === 1 && input[0] < 128) {
 			return input
 		} else {
-			return BufferLib.concat([encodeLength(input.length, 128), input])
+			return Buffer.concat([encodeLength(input.length, 128), input])
 		}
 	}
 }
@@ -45,12 +43,12 @@ function safeParseInt (v, base) {
 
 function encodeLength (len, offset) {
 	if (len < 56) {
-		return BufferLib.from([len + offset])
+		return Buffer.from([len + offset])
 	} else {
 		var hexLength = intToHex(len)
 		var lLength = hexLength.length / 2
 		var firstByte = intToHex(offset + 55 + lLength)
-		return BufferLib.hexToBuffer(firstByte + hexLength,false);
+		return Buffer.from(firstByte + hexLength, "hex");
 	}
 }
 
@@ -61,7 +59,7 @@ function encodeLength (len, offset) {
  **/
 exports.decode = function (input, stream) {
 	if (!input || input.length === 0) {
-		return BufferLib.newBufferUnsafe(0);
+		return Buffer.alloc(0);
 	}
 
 	input = toBuffer(input)
@@ -79,7 +77,7 @@ exports.decode = function (input, stream) {
 
 exports.getLength = function (input) {
 	if (!input || input.length === 0) {
-		return BufferLib.newBufferUnsafe(0);
+		return Buffer.alloc(0);
 	}
 
 	input = toBuffer(input)
@@ -119,7 +117,7 @@ function _decode (input) {
 
 		// set 0x80 null to 0
 		if (firstByte === 0x80) {
-			data = BufferLib.newBufferUnsafe(0);
+			data = Buffer.alloc(0);
 		} else {
 			data = input.slice(1, length)
 		}
@@ -193,7 +191,6 @@ function intToHex (i) {
 	if (hex.length % 2) {
 		hex = '0' + hex
 	}
-
 	return hex
 }
 
@@ -204,40 +201,32 @@ function padToEven (a) {
 
 function intToBuffer (i) {
 	var hex = intToHex(i)
-	return BufferLib.hexToBuffer(hex,false);
+	return Buffer.from(hex, "hex");
 }
 
 function toBuffer (v) {
 	if (!(v instanceof Uint8Array)) {
 		if (typeof v === 'string') {
 			if (isHexPrefixed(v)) {
-				v = BufferLib.hexToBuffer(v);
+				v = Buffer.from(v.substring(2), "hex");
 			} else {
-				v = BufferLib.stringToBuffer(v);
+				v = Buffer.from(v);
 			}
-		} else if (typeof v === 'number') {
+		} else if (typeof v === 'number' || typeof v === 'bigint') {
 			if (!v) {
-				v = BufferLib.newBufferUnsafe(0);
+				v = Buffer.alloc(0);
 			} else {
 				v = intToBuffer(v)
 			}
 		} else if (v === null || v === undefined) {
-			v = BufferLib.newBufferUnsafe(0);
-		/*
-		} else if (v.toArray) {
-			// converts a BN to a Buffer
-			v = Buffer.from(v.toArray())
-		*/
-		} else if (BigNumber.isBigNumber(v)) {
-			if (v.isZero()) {
-				v = BufferLib.newBufferUnsafe(0);
-			} else {
-				v = intToBuffer(v)
-			}
+			v = Buffer.alloc(0);
 		} else {
 			throw new Error('invalid type')
 		}
 	}
-	return v
+	if(!Buffer.isBuffer(v)){
+		v = Buffer.from(v.buffer, v.byteOffset, v.byteLength);
+	}
+	return v;
 }
 
